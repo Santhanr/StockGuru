@@ -1,0 +1,11 @@
+langgraph==1.1.2
+langchain-core==1.2.18
+langchain-openai==1.1.11
+langchain-anthropic>=0.3.0
+openai==2.26.0
+pydantic==2.12.5
+requests==2.32.5
+yfinance>=0.2.50
+slack-sdk>=3.27.0
+slack-bolt>=1.18.0
+python-dotenv>=1.0.0
