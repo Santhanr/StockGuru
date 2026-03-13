@@ -26,6 +26,6 @@ def post_message(text: str, thread_ts: str | None = None, token: str | None = No
         return resp["ts"]
     except Exception as exc:
         safe_exc = str(exc).encode("ascii", errors="replace").decode("ascii")
-        safe_text = text.encode("ascii", errors="replace").decode("ascii")
-        print(f"[Slack error] {safe_exc}\n[Message] {safe_text}")
+        safe_text = text[:100].encode("ascii", errors="replace").decode("ascii")
+        print(f"[Slack error] token={effective_token[:20]}... channel={config.SLACK_CHANNEL_ID} error={safe_exc}\n[Message] {safe_text}")
         return ""
