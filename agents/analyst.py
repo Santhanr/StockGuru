@@ -109,7 +109,11 @@ Stop loss must give at least 2:1 reward-to-risk:
     llm = ChatOpenAI(model=config.ANALYST_MODEL, api_key=config.OPENAI_API_KEY)
     agent = create_react_agent(llm, _ANALYST_TOOLS)
 
-    result = agent.invoke({"messages": [{"role": "user", "content": system_prompt}]})
+    try:
+        result = agent.invoke({"messages": [{"role": "user", "content": system_prompt}]})
+    except Exception as exc:
+        print(f"[ANALYST] ERROR: OpenAI agent failed: {exc}")
+        raise
     final_content = result["messages"][-1].content
 
     thesis_dict = _parse_json_response(final_content, ticker)
@@ -123,7 +127,7 @@ Stop loss must give at least 2:1 reward-to-risk:
     # Slack
     slack_msg = _format_slack_message(ticker, thesis, iteration, report_dir)
     thread_ts = state.get("slack_thread_ts")
-    new_ts = slack_client.post_message(slack_msg, thread_ts=thread_ts)
+    new_ts = slack_client.post_message(slack_msg, thread_ts=thread_ts, token=config.SLACK_ANALYST_BOT_TOKEN)
     if not thread_ts and new_ts:
         thread_ts = new_ts
 

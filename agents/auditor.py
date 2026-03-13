@@ -108,7 +108,11 @@ even if not perfect — a consensus must be reached.
         llm = ChatAnthropic(model=config.AUDITOR_MODEL, api_key=config.ANTHROPIC_API_KEY)
 
     agent = create_react_agent(llm, _AUDITOR_TOOLS)
-    result = agent.invoke({"messages": [{"role": "user", "content": system_prompt}]})
+    try:
+        result = agent.invoke({"messages": [{"role": "user", "content": system_prompt}]})
+    except Exception as exc:
+        print(f"[AUDITOR] ERROR: {'Anthropic' if not config.AUDITOR_MODEL.startswith('gpt') else 'OpenAI'} agent failed: {exc}")
+        raise
     final_content = result["messages"][-1].content
 
     verdict_dict = _parse_json_response(final_content, ticker)
@@ -123,7 +127,7 @@ even if not perfect — a consensus must be reached.
 
     # Slack
     slack_msg = _format_slack_message(ticker, verdict, iteration)
-    slack_client.post_message(slack_msg, thread_ts=state.get("slack_thread_ts"))
+    slack_client.post_message(slack_msg, thread_ts=state.get("slack_thread_ts"), token=config.SLACK_SENIOR_ANALYST_BOT_TOKEN)
 
     return {
         "auditor_verdict": verdict.model_dump(),

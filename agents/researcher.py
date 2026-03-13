@@ -29,29 +29,54 @@ def researcher_node(state: OverallState) -> dict:
 
     # ---- 1. Deterministic data collection ----
     print("[RESEARCHER] Fetching SEC Form 4 insider filings...")
-    form4 = get_recent_form4_filings.invoke({"ticker": ticker})
+    try:
+        form4 = get_recent_form4_filings.invoke({"ticker": ticker})
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: SEC EDGAR failed: {exc}")
+        form4 = "SEC EDGAR unavailable."
 
     print("[RESEARCHER] Fetching unusual options flow...")
-    options = get_unusual_options_flow.invoke({"ticker": ticker})
+    try:
+        options = get_unusual_options_flow.invoke({"ticker": ticker})
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: Options flow (yfinance) failed: {exc}")
+        options = "Options flow unavailable."
 
     print("[RESEARCHER] Searching Reddit discussion spike...")
-    reddit = search_web.invoke(
-        {"query": f"{ticker} Reddit unusual discussion spike site:reddit.com"}
-    )
+    try:
+        reddit = search_web.invoke(
+            {"query": f"{ticker} Reddit unusual discussion spike site:reddit.com"}
+        )
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: Perplexity search failed: {exc}")
+        reddit = "Web search unavailable."
 
     print("[RESEARCHER] Searching earnings transcript / guidance...")
-    earnings = search_web.invoke(
-        {"query": f"{ticker} earnings transcript guidance 2025 2026"}
-    )
+    try:
+        earnings = search_web.invoke(
+            {"query": f"{ticker} earnings transcript guidance 2025 2026"}
+        )
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: Perplexity search failed: {exc}")
+        earnings = "Web search unavailable."
 
     print("[RESEARCHER] Searching analyst upgrades / news...")
-    analyst_news = search_web.invoke(
-        {"query": f"{ticker} latest analyst upgrades downgrades news"}
-    )
+    try:
+        analyst_news = search_web.invoke(
+            {"query": f"{ticker} latest analyst upgrades downgrades news"}
+        )
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: Perplexity search failed: {exc}")
+        analyst_news = "Web search unavailable."
 
     print("[RESEARCHER] Fetching price history & technical indicators...")
-    price_history = get_price_history.invoke({"ticker": ticker, "period": "3mo"})
-    technicals = get_technical_indicators.invoke({"ticker": ticker})
+    try:
+        price_history = get_price_history.invoke({"ticker": ticker, "period": "3mo"})
+        technicals = get_technical_indicators.invoke({"ticker": ticker})
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: yfinance market data failed: {exc}")
+        price_history = "Price history unavailable."
+        technicals = "Technical indicators unavailable."
 
     # ---- 2. Synthesize with LLM ----
     print("[RESEARCHER] Synthesizing report with LLM...")
@@ -100,8 +125,12 @@ RAW DATA:
 {raw_data}
 """
 
-    response = llm.invoke(synthesis_prompt)
-    report_content = response.content
+    try:
+        response = llm.invoke(synthesis_prompt)
+        report_content = response.content
+    except Exception as exc:
+        print(f"[RESEARCHER] ERROR: OpenAI synthesis failed: {exc}")
+        raise
 
     # ---- 3. Persist to file ----
     report_path = file_memory.write_report(report_dir, "research_report.md", report_content)

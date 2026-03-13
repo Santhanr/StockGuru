@@ -104,7 +104,9 @@ def run_pipeline(ticker: str, company: str, say, thread_ts: str):
     try:
         final_state = analysis_app.invoke(initial_state)
         _post_final_answer(ticker, company, final_state, say, thread_ts)
+        _share_research_report(ticker, final_state, say, thread_ts)
     except Exception as exc:
+        print(f"[BOT] ERROR: Pipeline failed for {ticker}: {exc}")
         say(
             text=f"Analysis failed for {ticker}: {exc}",
             thread_ts=thread_ts,
@@ -172,15 +174,42 @@ def _post_final_answer(ticker: str, company: str, final_state: dict, say, thread
 # Slack event handlers
 # ---------------------------------------------------------------------------
 
+def _share_research_report(ticker: str, final_state: dict, say, thread_ts: str):
+    """Upload research_report.md to dpaste.com and post the link in the thread."""
+    report_path = final_state.get("researcher_report_path")
+    if not report_path:
+        return
+    try:
+        with open(report_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        resp = requests.post(
+            "https://dpaste.com/api/v2/",
+            data={"content": content, "syntax": "text", "title": f"{ticker} Research Report"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        url = resp.text.strip()
+        say(text=f"Research report: {url}", thread_ts=thread_ts)
+        print(f"[BOT] Research report uploaded: {url}")
+    except Exception as exc:
+        print(f"[BOT] ERROR: Failed to upload research report: {exc}")
+
+
 def _handle_message(message_text: str, say, client, channel: str, ts: str):
     """Shared logic for app_mention and direct messages."""
     # Strip bot mention if present
     clean = re.sub(r"<@[A-Z0-9]+>", "", message_text).strip()
+    print(f"[BOT] Received message: {clean!r}")
     if not clean:
         say(text="Ask me about any stock — e.g. 'Should I buy Apple?' or 'What do you think about Tesla?'", thread_ts=ts)
         return
 
-    ticker, company = extract_ticker(clean)
+    try:
+        ticker, company = extract_ticker(clean)
+    except Exception as exc:
+        print(f"[BOT] ERROR: OpenAI ticker extraction failed: {exc}")
+        say(text="Sorry, I'm having trouble connecting to OpenAI right now. Please try again shortly.", thread_ts=ts)
+        return
     if not ticker:
         say(
             text="I couldn't identify a stock in your message. Try something like: 'Should I invest in Apple?' or 'What about Tesla?'",

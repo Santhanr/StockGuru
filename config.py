@@ -7,9 +7,11 @@ AUDITOR_MODEL              = os.getenv("AUDITOR_MODEL",    "claude-haiku-4-5-202
 PERPLEXITY_MODEL           = os.getenv("PERPLEXITY_MODEL", "sonar")
 
 # --- Slack ---
-SLACK_CHANNEL_ID  = os.getenv("SLACK_CHANNEL_ID")
-SLACK_BOT_TOKEN   = os.getenv("SLACK_BOT_TOKEN")
-SLACK_APP_TOKEN   = os.getenv("SLACK_APP_TOKEN")   # xapp-... for Socket Mode
+SLACK_CHANNEL_ID        = os.getenv("SLACK_CHANNEL_ID")
+SLACK_BOT_TOKEN         = os.getenv("SLACK_BOT_TOKEN")          # stockGuru bot
+SLACK_APP_TOKEN         = os.getenv("SLACK_APP_TOKEN")          # xapp-... for Socket Mode
+SLACK_ANALYST_BOT_TOKEN        = os.getenv("SLACK_ANALYST_BOT_TOKEN")         # Analyst bot
+SLACK_SENIOR_ANALYST_BOT_TOKEN = os.getenv("SLACK_SENIOR_ANALYST_BOT_TOKEN")  # SeniorAnalyst bot (auditor)
 
 # --- Pipeline limits ---
 MAX_REVISIONS = int(os.getenv("MAX_REVISIONS", "2"))
